@@ -7,11 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToeConsoleApp", "TicT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToeTests", "TicTacToeTests\TicTacToeTests.csproj", "{6686563C-CB51-42CA-BB6D-3216AF4844A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorSignalRApp.Server", "BlazorSignalRApp\Server\BlazorSignalRApp.Server.csproj", "{12558C02-F6F8-44CB-AF8B-8F4A6F36AEEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorSignalRApp.Server", "BlazorSignalRApp\Server\BlazorSignalRApp.Server.csproj", "{12558C02-F6F8-44CB-AF8B-8F4A6F36AEEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorSignalRApp.Client", "BlazorSignalRApp\Client\BlazorSignalRApp.Client.csproj", "{B64B70EA-2E90-431D-BA63-A8C8CDBF7D70}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorSignalRApp.Client", "BlazorSignalRApp\Client\BlazorSignalRApp.Client.csproj", "{B64B70EA-2E90-431D-BA63-A8C8CDBF7D70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorSignalRApp.Shared", "BlazorSignalRApp\Shared\BlazorSignalRApp.Shared.csproj", "{3BAA54CB-DFD3-43B7-B569-928736B1773F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorSignalRApp.Shared", "BlazorSignalRApp\Shared\BlazorSignalRApp.Shared.csproj", "{3BAA54CB-DFD3-43B7-B569-928736B1773F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

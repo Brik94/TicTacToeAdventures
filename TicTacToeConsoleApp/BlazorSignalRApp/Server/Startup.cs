@@ -53,6 +53,7 @@ namespace BlazorSignalRApp.Server
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/chatHub");
+                endpoints.MapHub<GameHub>("/gameHub");
                 endpoints.MapFallbackToFile("index.html");
             });
         }

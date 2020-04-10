@@ -1,0 +1,66 @@
+﻿@page "/game"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager NavigationManager
+
+<h1>Tic Tac Toe</h1>
+<table>
+    <tr>
+        <td @onclick = "(() => UpdateBoard(0))"></td>
+        <td @onclick = "(() => UpdateBoard(1))" class="vert"></td>
+        <td @onclick = "(() => UpdateBoard(2))"></td>
+    </tr>
+    <tr>
+        <td @onclick = "(() => UpdateBoard(3))" class="hori"></td>
+        <td @onclick = "(() => UpdateBoard(4))" class="vert hori"></td>
+        <td @onclick = "(() => UpdateBoard(5))" class="hori"></td>
+    </tr>
+    <tr>
+        <td @onclick = "(() => UpdateBoard(6))"></td>
+        <td @onclick = "(() => UpdateBoard(7))" class="vert"></td>
+        <td @onclick = "(() => UpdateBoard(8))" ></td>
+    </tr>
+</table>
+
+@code {
+    private HubConnection _hubConnection;
+    private List<string> _messages = new List<string>();
+    private string _userInput;
+    private string _messageInput;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/gameHub"))
+            .Build();
+
+        _hubConnection.On<string>("ClientLog", ClientLog);
+        _hubConnection.On("SetPlayer", SetPlayer);
+
+
+        //StateHasChanged(); make use of this somewhere.
+        await _hubConnection.StartAsync();
+    }
+
+    private async Task ClientLog(string msg)
+    {
+        Console.WriteLine(msg.ToString());
+        await Task.CompletedTask;
+    }
+
+    //TODO: Once the server lets me know 2 players have joined, set the players to X & O somehow...
+    private async Task SetPlayer()
+    {
+        await Task.CompletedTask;
+    }
+
+
+    //TODO: Pass the move to the gameBoard.
+    private async Task UpdateBoard(int move)
+    {
+        Console.WriteLine($"{move} was clicked.");
+        await Task.CompletedTask;
+    }
+
+    public bool IsConnected =>
+        _hubConnection.State == HubConnectionState.Connected;
+}
