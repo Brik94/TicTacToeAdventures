@@ -80,7 +80,6 @@ namespace TicTacToeConsoleApp
                 }
             }
 
-
             return userMove;
         }
     }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace TicTacToeConsoleApp
 {
@@ -9,10 +8,10 @@ namespace TicTacToeConsoleApp
      */
     public class GameEngine
     {
-        private char[] _gameBoard;
         private char _playerOne;
         private char _playerTwo;
 
+        private char[] _gameBoard;
         public char[] GameBoard { get { return _gameBoard; } }
 
         //TODO: revisit constructor.
@@ -62,7 +61,6 @@ namespace TicTacToeConsoleApp
         }
 
 
-        //TODO: Test
         public bool CheckForWin(char player)
         {
             #region Horizontal Wins
