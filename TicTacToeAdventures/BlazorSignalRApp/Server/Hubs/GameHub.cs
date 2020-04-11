@@ -17,7 +17,7 @@ namespace BlazorSignalRApp.Server.Hubs
         {
             string gameSessionID = null;
 
-            if (String.IsNullOrEmpty(_waitingPlayer))
+            if (string.IsNullOrEmpty(_waitingPlayer))
             {
                 _waitingPlayer = Context.ConnectionId;
 
@@ -44,6 +44,14 @@ namespace BlazorSignalRApp.Server.Hubs
             }
 
             await base.OnConnectedAsync();
+        }
+
+        //TODO: Send move only to Opponent, not ALL clients
+        // await Clients.Client(opponentID).SendAsync()
+        public async Task SendMove(int move, char player)
+        {
+            await Clients.All.SendAsync("ClientLog", $"Move:{move} Player:{player}");
+            await Clients.All.SendAsync("RecieveMove", move, player);
         }
     }
 }

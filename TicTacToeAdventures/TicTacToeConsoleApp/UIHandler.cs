@@ -4,6 +4,7 @@ using System.Linq;
 namespace TicTacToeConsoleApp
 {
     //Taking better name suggestions :P
+    //TODO: Consider using an Interface. WebApp may need similar functionality. ConsoleUIHandler : UIHandler
     public class UIHandler
     {
         public int VerifyUserInput()
