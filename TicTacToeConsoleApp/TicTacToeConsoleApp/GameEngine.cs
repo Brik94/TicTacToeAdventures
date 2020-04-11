@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 
 namespace TicTacToeConsoleApp
 {
@@ -48,77 +47,64 @@ namespace TicTacToeConsoleApp
 
         private bool IsMoveValid(int move)
         {
-            if (_gameBoard[move] == 'X' || _gameBoard[move] == 'O')
-            {
-                return false;
-            }
-            return true;
+            return _gameBoard[move] == ' ';
         }
 
         //TODO: Test all combos.
-        public bool CheckForWin(char player)
+        public bool CheckForWin()
         {
-            return (DidWinByRow(player) || DidWinByColumn(player) || DidWinByAcross(player));
+            return (DidWinByRow() || DidWinByColumn() || DidWinByDiagonal());
         }
 
-        private bool DidWinByRow(char player)
+        private bool DidWinByRow()
         {
-            if (_gameBoard[0] == player && _gameBoard[1] == player && _gameBoard[2] == player)
+            if (_gameBoard[0] != ' ' && _gameBoard[0] == _gameBoard[1] && _gameBoard[1] == _gameBoard[2])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            else if (_gameBoard[3] == player && _gameBoard[4] == player && _gameBoard[5] == player)
+            else if (_gameBoard[3] != ' ' && _gameBoard[3] == _gameBoard[4] && _gameBoard[4] == _gameBoard[5])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            else if (_gameBoard[6] == player && _gameBoard[7] == player && _gameBoard[8] == player)
+            else if (_gameBoard[6] != ' ' && _gameBoard[6] == _gameBoard[7] && _gameBoard[7] == _gameBoard[8])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
 
             return false;
         }
 
-        private bool DidWinByColumn(char player)
+        private bool DidWinByColumn()
         {
-            if (_gameBoard[0] == player && _gameBoard[3] == player && _gameBoard[6] == player)
+            if (_gameBoard[0] != ' ' && _gameBoard[0] == _gameBoard[3] && _gameBoard[3] == _gameBoard[6])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            else if (_gameBoard[1] == player && _gameBoard[4] == player && _gameBoard[7] == player)
+            else if (_gameBoard[1] != ' ' && _gameBoard[1] == _gameBoard[4] && _gameBoard[4] == _gameBoard[7])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            else if (_gameBoard[2] == player && _gameBoard[5] == player && _gameBoard[8] == player)
+            else if (_gameBoard[2] != ' ' && _gameBoard[2] == _gameBoard[5] && _gameBoard[5] == _gameBoard[8])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
 
             return false;
         }
 
-        private bool DidWinByAcross(char player)
+        private bool DidWinByDiagonal()
         {
-            if (_gameBoard[0] == player && _gameBoard[4] == player && _gameBoard[8] == player)
+            if (_gameBoard[0] != ' ' && _gameBoard[0] == _gameBoard[4] && _gameBoard[4] == _gameBoard[8])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            else if (_gameBoard[2] == player && _gameBoard[4] == player && _gameBoard[6] == player)
+            else if (_gameBoard[2] != ' ' && _gameBoard[2] == _gameBoard[4] && _gameBoard[4] == _gameBoard[6])
             {
-                Console.WriteLine($"{player} Wins!");
                 return true;
             }
             return false;
         }
 
-        //TODO: Print a tie message in UI "Console.WriteLine("There's a tie. GAME OVER.");"
         public bool CheckForTie()
         {
             return !_gameBoard.Any(x => x == ' ');

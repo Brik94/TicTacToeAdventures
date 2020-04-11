@@ -27,13 +27,16 @@ namespace TicTacToeConsoleApp
         {
             var gameEngine = new GameEngine();
             var uiHandler = new UIHandler();
-            var player1 = 'X';
-            var player2 = 'O';
+
+            char player1 = 'X';
+            char player2 = 'O';
             char currentPlayer = '\0';
+            bool isWinFound = false;
+            bool isTimeGame = false;
 
             Console.WriteLine(uiHandler.DrawBoard(gameEngine.GameBoard));
 
-            while (!(gameEngine.CheckForWin(currentPlayer) || gameEngine.CheckForTie()))
+            while (!(isWinFound || isTimeGame))
             {
                 currentPlayer = currentPlayer == player2 || currentPlayer == '\0' ? player1 : player2;
                 Console.WriteLine($" {currentPlayer}, your turn!");
@@ -49,7 +52,13 @@ namespace TicTacToeConsoleApp
                 }
 
                 Console.WriteLine(uiHandler.DrawBoard(gameEngine.GameBoard));
+
+                isWinFound = gameEngine.CheckForWin();
+                isTimeGame = gameEngine.CheckForTie();
             }
+
+            if (isWinFound) Console.WriteLine($"{currentPlayer} Wins!");
+            else Console.WriteLine("There's a tie. GAME OVER.");
         }
     }
 }

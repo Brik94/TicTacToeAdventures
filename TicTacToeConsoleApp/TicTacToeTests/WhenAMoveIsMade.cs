@@ -94,7 +94,7 @@ namespace TicTacToeTests
             gameEngine.TryPlayerMove(1, 'X');
             gameEngine.TryPlayerMove(2, 'X');
 
-            Assert.IsTrue(gameEngine.CheckForWin('X'));
+            Assert.IsTrue(gameEngine.CheckForWin());
         }
 
         [TestMethod]
