@@ -30,31 +30,59 @@ namespace TicTacToeTests
         [TestMethod]
         public void AndTheMoveIsValidThenAnUpdatedBoardIsDrawnCorrectly()
         {
+            var uiHandler = new UIHandler();
             var gameEngine = new GameEngine();
+
+
             gameEngine.TryPlayerMove(0, 'X');
 
-            var expectedBoard = $" {'X'}|{'_'}|{'_'}"
-                + $"\n {'_'}|{'_'}|{'_'}"
-                + $"\n {' '}|{' '}|{' '}"
-                + "\n";
+            var expectedBoard = "\n     |     |      \n"
+                + $"  X  |     |   \n"
 
-            Assert.AreEqual(expectedBoard, gameEngine.DrawBoard());
+                + "_____|_____|_____ \n"
+
+                + "     |     |      \n"
+
+                + $"     |     |   \n"
+
+                + "_____|_____|_____ \n"
+
+                + "     |     |      \n"
+
+                + $"     |     |   \n"
+
+                + "     |     |      \n";
+
+            Assert.AreEqual(expectedBoard, uiHandler.DrawBoard(gameEngine.GameBoard));
         }
 
         [TestMethod]
         public void AndTheMoveIsNOTValidThenTheBoardStateIsRetained()
         {
             var gameEngine = new GameEngine();
+            var uiHandler = new UIHandler();
 
             gameEngine.TryPlayerMove(0, 'X');
             gameEngine.TryPlayerMove(0, 'X');
 
-            var expectedBoard = $" {'X'}|{'_'}|{'_'}"
-                + $"\n {'_'}|{'_'}|{'_'}"
-                + $"\n {' '}|{' '}|{' '}"
-                + "\n";
+            var expectedBoard = "\n     |     |      \n"
+                + $"  X  |     |   \n"
 
-            Assert.AreEqual(expectedBoard, gameEngine.DrawBoard());
+                + "_____|_____|_____ \n"
+
+                + "     |     |      \n"
+
+                + $"     |     |   \n"
+
+                + "_____|_____|_____ \n"
+
+                + "     |     |      \n"
+
+                + $"     |     |   \n"
+
+                + "     |     |      \n";
+
+            Assert.AreEqual(expectedBoard, uiHandler.DrawBoard(gameEngine.GameBoard));
         }
 
         [TestMethod]

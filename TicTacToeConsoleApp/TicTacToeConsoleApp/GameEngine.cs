@@ -1,37 +1,32 @@
 ﻿using System;
+using System.Linq;
 
 namespace TicTacToeConsoleApp
 {
     /***
-     * I need access to GameBoard outside of this class, for the UI
      * Consider a Player Class. How would this look?
      */
     public class GameEngine
     {
-        private char _playerOne;
-        private char _playerTwo;
-
         private char[] _gameBoard;
         public char[] GameBoard { get { return _gameBoard; } }
 
         //TODO: revisit constructor.
         public GameEngine()
         {
-            _playerOne = 'X';
-            _playerTwo = 'O';
             _gameBoard = InitalizeGameBoard();
         }
 
         private char[] InitalizeGameBoard()
         {
             var gameBoard = new char[9];
-            gameBoard[0] = '_';
-            gameBoard[1] = '_';
-            gameBoard[2] = '_';
+            gameBoard[0] = ' ';
+            gameBoard[1] = ' ';
+            gameBoard[2] = ' ';
 
-            gameBoard[3] = '_';
-            gameBoard[4] = '_';
-            gameBoard[5] = '_';
+            gameBoard[3] = ' ';
+            gameBoard[4] = ' ';
+            gameBoard[5] = ' ';
 
             gameBoard[6] = ' ';
             gameBoard[7] = ' ';
@@ -60,10 +55,14 @@ namespace TicTacToeConsoleApp
             return true;
         }
 
-
+        //TODO: Test all combos.
         public bool CheckForWin(char player)
         {
-            #region Horizontal Wins
+            return (DidWinByRow(player) || DidWinByColumn(player) || DidWinByAcross(player));
+        }
+
+        private bool DidWinByRow(char player)
+        {
             if (_gameBoard[0] == player && _gameBoard[1] == player && _gameBoard[2] == player)
             {
                 Console.WriteLine($"{player} Wins!");
@@ -79,10 +78,13 @@ namespace TicTacToeConsoleApp
                 Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            #endregion
 
-            # region Vertical Wins
-            else if (_gameBoard[0] == player && _gameBoard[3] == player && _gameBoard[6] == player)
+            return false;
+        }
+
+        private bool DidWinByColumn(char player)
+        {
+            if (_gameBoard[0] == player && _gameBoard[3] == player && _gameBoard[6] == player)
             {
                 Console.WriteLine($"{player} Wins!");
                 return true;
@@ -97,10 +99,13 @@ namespace TicTacToeConsoleApp
                 Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            #endregion
 
-            # region Diagonal Wins
-            else if (_gameBoard[0] == player && _gameBoard[4] == player && _gameBoard[8] == player)
+            return false;
+        }
+
+        private bool DidWinByAcross(char player)
+        {
+            if (_gameBoard[0] == player && _gameBoard[4] == player && _gameBoard[8] == player)
             {
                 Console.WriteLine($"{player} Wins!");
                 return true;
@@ -110,36 +115,13 @@ namespace TicTacToeConsoleApp
                 Console.WriteLine($"{player} Wins!");
                 return true;
             }
-            #endregion
-
             return false;
         }
 
+        //TODO: Print a tie message in UI "Console.WriteLine("There's a tie. GAME OVER.");"
         public bool CheckForTie()
         {
-            int openSpots = _gameBoard.Length;
-            foreach(var spot in _gameBoard)
-            {
-                if (spot == 'X' || spot == 'O')
-                {
-                    openSpots--;
-                }
-            }
-
-            if(openSpots == 0)
-            {
-                Console.WriteLine("There's a tie. GAME OVER.");
-                return true;
-            }
-            return false;
-        }
-
-        public string DrawBoard()
-        {
-            return $" {_gameBoard[0]}|{_gameBoard[1]}|{_gameBoard[2]}"
-                + $"\n {_gameBoard[3]}|{_gameBoard[4]}|{_gameBoard[5]}"
-                + $"\n {_gameBoard[6]}|{_gameBoard[7]}|{_gameBoard[8]}"
-                + "\n";
+            return !_gameBoard.Any(x => x == ' ');
         }
     }
 }
