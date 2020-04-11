@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Client\BlazorSignalRApp.Client.csproj" />
-    <ProjectReference Include="..\Shared\BlazorSignalRApp.Shared.csproj" />
+    <ProjectReference Include="..\Shared\TicTacToe.Shared.csproj" />
   </ItemGroup>
 
 

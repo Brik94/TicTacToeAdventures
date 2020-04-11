@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace TicTacToeConsoleApp
 {
-    //TODO: test
+    //Taking better name suggestions :P
     public class UIHandler
     {
         public int VerifyUserInput()
@@ -18,9 +18,7 @@ namespace TicTacToeConsoleApp
             return VerifyUserInput();
         }
 
-        //This new method seperates business logic from UI logic (the WriteLine).
-        //Also makes this easily testable.
-        private bool IsInputValid(string input)
+        public bool IsInputValid(string input)
         {
             int[] validMoves = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 

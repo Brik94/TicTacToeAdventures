@@ -1,16 +1,12 @@
 ﻿using System.Linq;
 
-namespace TicTacToeConsoleApp
+namespace TicTacToe.Shared
 {
-    /***
-     * Consider a Player Class. How would this look?
-     */
     public class GameEngine
     {
         private char[] _gameBoard;
         public char[] GameBoard { get { return _gameBoard; } }
 
-        //TODO: revisit constructor.
         public GameEngine()
         {
             _gameBoard = InitalizeGameBoard();
@@ -50,7 +46,6 @@ namespace TicTacToeConsoleApp
             return _gameBoard[move] == ' ';
         }
 
-        //TODO: Test all combos.
         public bool CheckForWin()
         {
             return (DidWinByRow() || DidWinByColumn() || DidWinByDiagonal());

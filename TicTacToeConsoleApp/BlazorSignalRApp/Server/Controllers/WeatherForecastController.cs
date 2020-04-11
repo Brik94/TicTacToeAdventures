@@ -1,4 +1,4 @@
-﻿using BlazorSignalRApp.Shared;
+﻿using TicTacToe.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;

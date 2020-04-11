@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BlazorSignalRApp.Shared
+namespace TicTacToe.Shared
 {
     public class WeatherForecast
     {
