@@ -54,33 +54,25 @@ namespace TicTacToeConsoleApp
             }
         }
 
+        //This new method seperates business logic from UI logic (the WriteLine).
+        //Also makes this easily testable.
+        private static bool IsInputValid(string input)
+        {
+            int[] validMoves = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+
+            return int.TryParse(input, out int userMove) && validMoves.Contains(userMove);
+        }
+
         static int VerifyUserInput()
         {
-            int userMove = -1;
-            int[] validMoves = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-            bool validInput = false;
-
-            while (!validInput)
+            var input = Console.ReadLine();
+            if (IsInputValid(input))
             {
-                try
-                {
-                    userMove = Convert.ToInt32(Console.ReadLine());
-                    if (validMoves.Contains(userMove))
-                    {
-                        validInput = true;
-                    }
-                    else
-                    {
-                        Console.WriteLine("This input is incorrect. Enter numbers 0 - 8");
-                    }
-                }
-                catch
-                {
-                    Console.WriteLine("This input is incorrect. Enter numbers 0 - 8");
-                }
+                return int.Parse(input);
             }
 
-            return userMove;
+            Console.WriteLine("This input is incorrect. Enter a number that's 0-8.");
+            return VerifyUserInput();
         }
     }
 }
