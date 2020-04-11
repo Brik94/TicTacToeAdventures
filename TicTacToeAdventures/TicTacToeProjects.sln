@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToeConsoleApp", "TicTacToeConsoleApp\TicTacToeConsoleApp.csproj", "{C1414A06-34D2-4782-9260-48D51530F21A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToeTests", "TicTacToeTests\TicTacToeTests.csproj", "{6686563C-CB51-42CA-BB6D-3216AF4844A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToe.MS.UnitTests", "TicTacToeTests\TicTacToe.MS.UnitTests.csproj", "{6686563C-CB51-42CA-BB6D-3216AF4844A1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorSignalRApp.Server", "BlazorSignalRApp\Server\BlazorSignalRApp.Server.csproj", "{12558C02-F6F8-44CB-AF8B-8F4A6F36AEEB}"
 EndProject
