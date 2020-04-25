@@ -15,6 +15,10 @@ td {
     font-size: xx-large;
 }
 
+h1 {
+    color: antiquewhite;
+}
+
 table {
     margin: 5px auto;
 }

@@ -11,15 +11,16 @@ namespace BlazorSignalRApp.Server.Hubs
     //TODO: Look into handling lost connections https://docs.microsoft.com/en-us/aspnet/core/signalr/dotnet-client?view=aspnetcore-3.1&tabs=visual-studio#handle-lost-connection
     public class GameHub : Hub
     {
-        public static string _waitingPlayer = string.Empty;
+        public static string _playerOne = string.Empty;
+        public static string _playerTwo = string.Empty;
 
         public override async Task OnConnectedAsync()
         {
             string gameSessionID = null;
 
-            if (string.IsNullOrEmpty(_waitingPlayer))
+            if (string.IsNullOrEmpty(_playerOne))
             {
-                _waitingPlayer = Context.ConnectionId;
+                _playerOne = Context.ConnectionId;
 
                 await Clients.All.SendAsync("ClientLog", $"Player 1 has joined");
                 await Clients.All.SendAsync("ClientLog", $"Waiting for player two...");
@@ -27,9 +28,10 @@ namespace BlazorSignalRApp.Server.Hubs
             else
             {
                 gameSessionID = "game-" + Guid.NewGuid().ToString();
+                _playerTwo = Context.ConnectionId;
 
-                await Groups.AddToGroupAsync(_waitingPlayer, gameSessionID);
-                await Groups.AddToGroupAsync(Context.ConnectionId, gameSessionID);
+                await Groups.AddToGroupAsync(_playerOne, gameSessionID);
+                await Groups.AddToGroupAsync(_playerTwo, gameSessionID);
 
                 await Clients.All.SendAsync("ClientLog", $"Player 2 has joined");
                 await Clients.All.SendAsync("ClientLog", $"The game will now begin.");
@@ -38,8 +40,8 @@ namespace BlazorSignalRApp.Server.Hubs
             if (gameSessionID != null)
             {
                 //NOTE: SendAsync can also send back objects.
-                await Clients.Client("connection-" + Guid.NewGuid().ToString()).SendAsync("SetPlayer");
-                await Clients.Client("connection-" + Guid.NewGuid().ToString()).SendAsync("SetPlayer");
+                await Clients.Client(_playerOne).SendAsync("SetPlayer", 'X');
+                await Clients.Client(Context.ConnectionId).SendAsync("SetPlayer", 'O');
                 await Clients.Groups(gameSessionID).SendAsync("RefreshGame");
             }
 

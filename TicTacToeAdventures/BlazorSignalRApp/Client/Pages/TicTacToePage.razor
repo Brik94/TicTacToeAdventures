@@ -42,13 +42,17 @@
         </table>
     </div>
 
+    <h1>@_winMessage</h1>
+
 @code {
-        //TODO: Handle players
-        //TODO: Check for Win/Tie
-        //TODO: Disable UI
+    //TODO: Handle players
+    //TODO: Check for Win/Tie
+    //TODO: Disable UI
 
     private GameEngine _gameEngine;
     private HubConnection _hubConnection;
+    private string _winMessage = null;
+    private char _clientPlayer;
     protected bool IsDisabled { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -59,7 +63,7 @@
             .Build();
 
         _hubConnection.On<string>("ClientLog", ClientLog);
-        _hubConnection.On("SetPlayer", SetPlayer);
+        _hubConnection.On<char>("SetPlayer", SetPlayer);
         _hubConnection.On<int, char>("RecieveMove", RecieveOpponentMove);
 
 
@@ -73,25 +77,27 @@
         await Task.CompletedTask;
     }
 
-    //TODO: Once the server lets me know 2 players have joined, set the players to X & O somehow...
-    private async Task SetPlayer()
+    private async Task SetPlayer(char player)
     {
+        _clientPlayer = player;
+        Console.WriteLine(_clientPlayer);
         await Task.CompletedTask;
     }
 
-
     private async Task UpdateBoard(int move)
     {
+        Console.WriteLine($"UpdateBoardIntro. Is Disabled? {IsDisabled}");
         if (!IsDisabled)
         {
             Console.WriteLine($"{move} was clicked.");
-            char player = 'X';
 
-            bool moveSucceeded = _gameEngine.TryPlayerMove(move, player);
+            bool moveSucceeded = _gameEngine.TryPlayerMove(move, _clientPlayer);
             if (moveSucceeded)
             {
                 IsDisabled = true;
-                await SendMoveToOpponent(move, player);
+                Console.WriteLine($"UpdateBoard. Is Disabled? {IsDisabled}");
+                await SendMoveToOpponent(move, _clientPlayer);
+                StateHasChanged();
             }
         }
 
@@ -112,18 +118,25 @@
         {
             //TODO: UpdateUI, End Game.
             Console.WriteLine($"{opponent} wins!");
+            _winMessage = $"{opponent} wins!";
+            StateHasChanged();
         }
         else if (isTieFound)
         {
             //TODO: UpdateUI, End Game.
             Console.WriteLine("Tie game.");
+            _winMessage = $"{opponent} wins!";
+            StateHasChanged();
         }
-
-        IsDisabled = false;
-        StateHasChanged();
-        await Task.CompletedTask;
+        else
+        {
+            IsDisabled = false;
+            Console.WriteLine($"ReciveMove. Is Disabled? {IsDisabled}");
+            StateHasChanged();
+            await Task.CompletedTask;
+        }
     }
 
     public bool IsConnected =>
-    _hubConnection.State == HubConnectionState.Connected;
+        _hubConnection.State == HubConnectionState.Connected;
 }
