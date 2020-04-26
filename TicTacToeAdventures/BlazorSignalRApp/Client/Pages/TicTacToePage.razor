@@ -2,47 +2,47 @@
 @using TicTacToe.Shared;
 @inject NavigationManager NavigationManager
 
-    <div class="board">
-        <h1 class="gameTitle">Tic Tac Toe</h1>
+<div class="board">
+    <h1 class="gameTitle">Tic Tac Toe</h1>
 
-        <table>
-            <tr>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(0))">
-                    @_gameEngine.GameBoard[0]
-                </td>
-                <td  disabled=@IsDisabled @onclick="(() => UpdateBoard(1))" class="vert">
-                    @_gameEngine.GameBoard[1]
-                </td>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(2))">
-                    @_gameEngine.GameBoard[2]
-                </td>
-            </tr>
-            <tr>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(3))" class="hori">
-                    @_gameEngine.GameBoard[3]
-                </td>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(4))" class="vert hori">
-                    @_gameEngine.GameBoard[4]
-                </td>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(5))" class="hori">
-                    @_gameEngine.GameBoard[5]
-                </td>
-            </tr>
-            <tr>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(6))">
-                    @_gameEngine.GameBoard[6]
-                </td>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(7))" class="vert">
-                    @_gameEngine.GameBoard[7]
-                </td>
-                <td disabled=@IsDisabled @onclick="(() => UpdateBoard(8))">
-                    @_gameEngine.GameBoard[8]
-                </td>
-            </tr>
-        </table>
-    </div>
+    <table>
+        <tr>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(0))">
+                @_gameEngine.GameBoard[0]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(1))" class="vert">
+                @_gameEngine.GameBoard[1]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(2))">
+                @_gameEngine.GameBoard[2]
+            </td>
+        </tr>
+        <tr>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(3))" class="hori">
+                @_gameEngine.GameBoard[3]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(4))" class="vert hori">
+                @_gameEngine.GameBoard[4]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(5))" class="hori">
+                @_gameEngine.GameBoard[5]
+            </td>
+        </tr>
+        <tr>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(6))">
+                @_gameEngine.GameBoard[6]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(7))" class="vert">
+                @_gameEngine.GameBoard[7]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(8))">
+                @_gameEngine.GameBoard[8]
+            </td>
+        </tr>
+    </table>
+</div>
 
-    <h1>@_winMessage</h1>
+<h1>@_statusMessage</h1>
 
 @code {
     //TODO: Handle players
@@ -51,7 +51,7 @@
 
     private GameEngine _gameEngine;
     private HubConnection _hubConnection;
-    private string _winMessage = null;
+    private string _statusMessage = null;
     private char _clientPlayer;
     protected bool IsDisabled { get; set; }
 
@@ -64,78 +64,91 @@
 
         _hubConnection.On<string>("ClientLog", ClientLog);
         _hubConnection.On<char>("SetPlayer", SetPlayer);
-        _hubConnection.On<int, char>("RecieveMove", RecieveOpponentMove);
+        _hubConnection.On<int, char>("ReceiveOpponentMove", ReceiveOpponentMove);
+        _hubConnection.On<string>("ReceiveOpponentMove", ReceiveEndGameUpdate);
 
 
         IsDisabled = false;
         await _hubConnection.StartAsync();
     }
 
-    private async Task ClientLog(string msg)
+//Hub Updates
+    private void ClientLog(string msg)
     {
         Console.WriteLine(msg.ToString());
-        await Task.CompletedTask;
     }
 
-    private async Task SetPlayer(char player)
+    private void SetPlayer(char player)
     {
         _clientPlayer = player;
-        Console.WriteLine(_clientPlayer);
-        await Task.CompletedTask;
+        Console.WriteLine("Player Game Piece: " + _clientPlayer);
     }
 
+    private void ReceiveEndGameUpdate(string update)
+    {
+        _statusMessage = update;
+        StateHasChanged();
+    }
+
+//Hub Senders
     private async Task UpdateBoard(int move)
     {
-        Console.WriteLine($"UpdateBoardIntro. Is Disabled? {IsDisabled}");
         if (!IsDisabled)
         {
-            Console.WriteLine($"{move} was clicked.");
-
             bool moveSucceeded = _gameEngine.TryPlayerMove(move, _clientPlayer);
             if (moveSucceeded)
             {
                 IsDisabled = true;
-                Console.WriteLine($"UpdateBoard. Is Disabled? {IsDisabled}");
+                Console.WriteLine($"UpdateBoard. Move: {move}, IsDisabled: {IsDisabled}");
                 await SendMoveToOpponent(move, _clientPlayer);
                 StateHasChanged();
             }
+        }
+        else
+        {
+            Console.WriteLine("UI Disabled. Not your turn.");
         }
 
         await Task.CompletedTask;
     }
 
-    private async Task SendMoveToOpponent(int move, char player) =>
-        await _hubConnection.SendAsync("SendMove", move, player);
-
-    private async Task RecieveOpponentMove(int move, char opponent)
+    private async Task ReceiveOpponentMove(int move, char opponent)
     {
-        _gameEngine.TryPlayerMove(move, opponent);
-
-        bool isWinFound =_gameEngine.CheckForWin();
-        bool isTieFound = _gameEngine.CheckForTie();
-
-        if (isWinFound)
-        {
-            //TODO: UpdateUI, End Game.
-            Console.WriteLine($"{opponent} wins!");
-            _winMessage = $"{opponent} wins!";
-            StateHasChanged();
-        }
-        else if (isTieFound)
-        {
-            //TODO: UpdateUI, End Game.
-            Console.WriteLine("Tie game.");
-            _winMessage = $"{opponent} wins!";
-            StateHasChanged();
-        }
-        else
+        bool moveSucceeded = _gameEngine.TryPlayerMove(move, opponent);
+        if (moveSucceeded)
         {
             IsDisabled = false;
-            Console.WriteLine($"ReciveMove. Is Disabled? {IsDisabled}");
+            Console.WriteLine($"Received Move from {opponent}. IsDisabled: {IsDisabled}");
             StateHasChanged();
-            await Task.CompletedTask;
         }
+
+        await CheckForEndGame(opponent);
     }
+
+    private async Task CheckForEndGame(char opponent)
+    {
+        if (_gameEngine.CheckForWin())
+        {
+            Console.WriteLine($"Opponent wins :(");
+            await SendEndGameUpdate($"{opponent} wins!");
+        }
+        else if (_gameEngine.CheckForTie())
+        {
+            Console.WriteLine("Tie game :(");
+            await SendEndGameUpdate($"Time Game :(");
+        }
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+
+//HUB Methods
+    private async Task SendMoveToOpponent(int move, char player) =>
+    await _hubConnection.SendAsync("SendMove", move, player);
+
+    private async Task SendEndGameUpdate(string update) =>
+        await _hubConnection.SendAsync("SendEndGameUpdate", update);
 
     public bool IsConnected =>
         _hubConnection.State == HubConnectionState.Connected;

@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlazorSignalRApp.Server.Hubs
@@ -13,47 +11,72 @@ namespace BlazorSignalRApp.Server.Hubs
     {
         public static string _playerOne = string.Empty;
         public static string _playerTwo = string.Empty;
+        public static string _gameSessionID = null;
 
         public override async Task OnConnectedAsync()
         {
-            string gameSessionID = null;
-
             if (string.IsNullOrEmpty(_playerOne))
             {
                 _playerOne = Context.ConnectionId;
 
                 await Clients.All.SendAsync("ClientLog", $"Player 1 has joined");
-                await Clients.All.SendAsync("ClientLog", $"Waiting for player two...");
+                await Clients.All.SendAsync("ClientLog", $"Waiting for Player 2...");
             }
             else
             {
-                gameSessionID = "game-" + Guid.NewGuid().ToString();
                 _playerTwo = Context.ConnectionId;
+                _gameSessionID = "game-" + Guid.NewGuid().ToString();
 
-                await Groups.AddToGroupAsync(_playerOne, gameSessionID);
-                await Groups.AddToGroupAsync(_playerTwo, gameSessionID);
+                await Groups.AddToGroupAsync(_playerOne, _gameSessionID);
+                await Groups.AddToGroupAsync(_playerTwo, _gameSessionID);
 
-                await Clients.All.SendAsync("ClientLog", $"Player 2 has joined");
-                await Clients.All.SendAsync("ClientLog", $"The game will now begin.");
+                await Clients.All.SendAsync("ClientLog", $"Player 2 has joined. The game will now begin.");
             }
 
-            if (gameSessionID != null)
+            if (_gameSessionID != null)
             {
-                //NOTE: SendAsync can also send back objects.
                 await Clients.Client(_playerOne).SendAsync("SetPlayer", 'X');
-                await Clients.Client(Context.ConnectionId).SendAsync("SetPlayer", 'O');
-                await Clients.Groups(gameSessionID).SendAsync("RefreshGame");
+                await Clients.Client(_playerTwo).SendAsync("SetPlayer", 'O');
+
+                await Clients.Groups(_gameSessionID).SendAsync("RefreshGame");
             }
 
             await base.OnConnectedAsync();
         }
 
-        //TODO: Send move only to Opponent, not ALL clients
-        // await Clients.Client(opponentID).SendAsync()
+        //Make this method smarter.
         public async Task SendMove(int move, char player)
         {
-            await Clients.All.SendAsync("ClientLog", $"Move:{move} Player:{player}");
-            await Clients.All.SendAsync("RecieveMove", move, player);
+            if (player == 'X') //Sent to Opponent O
+            {
+                await Clients.Client(_playerTwo).SendAsync("ReceiveOpponentMove", move, player);
+            }
+            else if (player == 'O') //Send to Opponent X
+            {
+                await Clients.Client(_playerOne).SendAsync("ReceiveOpponentMove", move, player);
+            }
+        }
+
+        public async Task SendEndGameUpdate(string endGameUpdate)
+        {
+            await Clients.Group(_gameSessionID).SendAsync("ReceiveEndGameUpdate", endGameUpdate);
+        }
+
+
+        //Brainstorming Ideas
+        public class Player
+        {
+            string ConnectionID { get; set; }
+            char GamePiece { get; set; }
+        }
+
+        public class Game
+        {
+            string GameSessionID { get; set; }
+            //GameStatus-> Starting, InProgress, Ending: (Win or Tie)}
+
+            Player One { get; set; }
+            Player Two { get; set; }
         }
     }
 }
