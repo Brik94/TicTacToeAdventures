@@ -1,5 +1,5 @@
-﻿@using Microsoft.AspNetCore.SignalR.Client
-@using TicTacToe.Shared;
+﻿@using TicTacToe.Shared;
+@using Controllers;
 @inject NavigationManager NavigationManager
 
 <div class="board">
@@ -42,37 +42,30 @@
     </table>
 </div>
 
-<h1>@_statusMessage</h1>
+<h1>@_gameController.StatusMessage</h1>
 
 @code {
-    //TODO: Handle players
-    //TODO: Check for Win/Tie
-    //TODO: Disable UI
-
+        //TODO: Handle players
+        //TODO: Check for Win/Tie
+        //TODO: Disable UI
+    private ServerGameController _gameController;
     private GameEngine _gameEngine;
-    private HubConnection _hubConnection;
-    private string _statusMessage = null;
-    private char _clientPlayer;
+    //private string _statusMessage = null;
+    //private char _clientPlayer;
     protected bool IsDisabled { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        _gameController = new ServerGameController();
         _gameEngine = new GameEngine();
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/gameHub"))
-            .Build();
-
-        _hubConnection.On<string>("ClientLog", ClientLog);
-        _hubConnection.On<char>("SetPlayer", SetPlayer);
-        _hubConnection.On<int, char>("ReceiveOpponentMove", ReceiveOpponentMove);
-        _hubConnection.On<string>("ReceiveOpponentMove", ReceiveEndGameUpdate);
-
 
         IsDisabled = false;
-        await _hubConnection.StartAsync();
+
+        await _gameController.StartGame();
+        await base.OnInitializedAsync();
     }
 
-//Hub Updates
+    //Hub Updates
     private void ClientLog(string msg)
     {
         Console.WriteLine(msg.ToString());
@@ -80,27 +73,28 @@
 
     private void SetPlayer(char player)
     {
-        _clientPlayer = player;
-        Console.WriteLine("Player Game Piece: " + _clientPlayer);
+        _gameController.ClientPlayer = player;
+        Console.WriteLine("Player Game Piece: " + _gameController.ClientPlayer);
     }
 
     private void ReceiveEndGameUpdate(string update)
     {
-        _statusMessage = update;
+        _gameController.StatusMessage = update;
         StateHasChanged();
     }
 
-//Hub Senders
+    //Hub Senders
     private async Task UpdateBoard(int move)
     {
         if (!IsDisabled)
         {
-            bool moveSucceeded = _gameEngine.TryPlayerMove(move, _clientPlayer);
+            bool moveSucceeded = _gameEngine.TryPlayerMove(move, _gameController.ClientPlayer);
             if (moveSucceeded)
             {
                 IsDisabled = true;
                 Console.WriteLine($"UpdateBoard. Move: {move}, IsDisabled: {IsDisabled}");
-                await SendMoveToOpponent(move, _clientPlayer);
+
+                await _gameController.SendMoveToOpponent(move, _gameController.ClientPlayer);
                 StateHasChanged();
             }
         }
@@ -112,8 +106,13 @@
         await Task.CompletedTask;
     }
 
-    private async Task ReceiveOpponentMove(int move, char opponent)
+    //TODO: Refactor this whole method.
+    private async Task ReceiveOpponentMove()
     {
+        var opponent = _gameController.Opponent.Piece;
+        var move = _gameController.Opponent.Move;
+
+
         bool moveSucceeded = _gameEngine.TryPlayerMove(move, opponent);
         if (moveSucceeded)
         {
@@ -122,6 +121,7 @@
             StateHasChanged();
         }
 
+        //TODO: Replace with _gameController call.
         await CheckForEndGame(opponent);
     }
 
@@ -130,26 +130,15 @@
         if (_gameEngine.CheckForWin())
         {
             Console.WriteLine($"Opponent wins :(");
-            await SendEndGameUpdate($"{opponent} wins!");
+            await _gameController.SendEndGameUpdate($"{opponent} wins!");
         }
         else if (_gameEngine.CheckForTie())
         {
             Console.WriteLine("Tie game :(");
-            await SendEndGameUpdate($"Time Game :(");
+            await _gameController.SendEndGameUpdate("Tie game :(");
         }
 
         StateHasChanged();
         await Task.CompletedTask;
     }
-
-
-//HUB Methods
-    private async Task SendMoveToOpponent(int move, char player) =>
-    await _hubConnection.SendAsync("SendMove", move, player);
-
-    private async Task SendEndGameUpdate(string update) =>
-        await _hubConnection.SendAsync("SendEndGameUpdate", update);
-
-    public bool IsConnected =>
-        _hubConnection.State == HubConnectionState.Connected;
 }
