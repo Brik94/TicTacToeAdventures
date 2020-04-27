@@ -7,94 +7,110 @@
 
     <table>
         <tr>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(0))">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(0))">
                 @_gameEngine.GameBoard[0]
             </td>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(1))" class="vert">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(1))" class="vert">
                 @_gameEngine.GameBoard[1]
             </td>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(2))">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(2))">
                 @_gameEngine.GameBoard[2]
             </td>
         </tr>
         <tr>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(3))" class="hori">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(3))" class="hori">
                 @_gameEngine.GameBoard[3]
             </td>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(4))" class="vert hori">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(4))" class="vert hori">
                 @_gameEngine.GameBoard[4]
             </td>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(5))" class="hori">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(5))" class="hori">
                 @_gameEngine.GameBoard[5]
             </td>
         </tr>
         <tr>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(6))">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(6))">
                 @_gameEngine.GameBoard[6]
             </td>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(7))" class="vert">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(7))" class="vert">
                 @_gameEngine.GameBoard[7]
             </td>
-            <td disabled=@IsDisabled @onclick="(() => UpdateBoard(8))">
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(8))">
                 @_gameEngine.GameBoard[8]
             </td>
         </tr>
     </table>
 </div>
 
-<h1>@_gameController.StatusMessage</h1>
+<h1>@_gameController.State.StatusMessage</h1>
+<h1>You are player @_gameController.State.ClientPiece</h1>
 
 @code {
-        //TODO: Handle players
-        //TODO: Check for Win/Tie
-        //TODO: Disable UI
+    //TODO: Disable UI
     private ServerGameController _gameController;
     private GameEngine _gameEngine;
-    //private string _statusMessage = null;
-    //private char _clientPlayer;
     protected bool IsDisabled { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        _gameController = new ServerGameController();
         _gameEngine = new GameEngine();
 
-        IsDisabled = false;
+        _gameController = new ServerGameController();
+        _gameController.StartGame += EnableUI;
+        _gameController.UIUpdateEvent += UpdateUIState;
+        _gameController.OpponentUpdatedEvent += UpdateOpponentMove;
+        await _gameController.Initialize();
 
-        await _gameController.StartGame();
+        IsDisabled = _gameController.State.UIDisabled;
         await base.OnInitializedAsync();
     }
 
-    //Hub Updates
-    private void ClientLog(string msg)
+    private void EnableUI(object sender, EventArgs e)
     {
-        Console.WriteLine(msg.ToString());
-    }
-
-    private void SetPlayer(char player)
-    {
-        _gameController.ClientPlayer = player;
-        Console.WriteLine("Player Game Piece: " + _gameController.ClientPlayer);
-    }
-
-    private void ReceiveEndGameUpdate(string update)
-    {
-        _gameController.StatusMessage = update;
+        IsDisabled = _gameController.State.UIDisabled;
         StateHasChanged();
     }
 
-    //Hub Senders
-    private async Task UpdateBoard(int move)
+    private void UpdateUIState(object sender, EventArgs e)
+    {
+        StateHasChanged();
+    }
+
+    private void UpdateOpponentMove(object sender, EventArgs e)
+    {
+        ProcessOpponentMove();
+        CheckForEndGame();
+    }
+
+    private async void CheckForEndGame()
+    {
+        if (_gameEngine.CheckForWin())
+        {
+            IsDisabled = true;
+            Console.WriteLine($"Opponent wins :(");
+            await _gameController.SendEndGameUpdate($"{_gameController.State.OpponentPiece} wins!");
+        }
+        else if (_gameEngine.CheckForTie())
+        {
+            IsDisabled = true;
+            Console.WriteLine("Tie game :(");
+            await _gameController.SendEndGameUpdate("Tie game :(");
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ProcessClientMove(int move)
     {
         if (!IsDisabled)
         {
-            bool moveSucceeded = _gameEngine.TryPlayerMove(move, _gameController.ClientPlayer);
+            bool moveSucceeded = _gameEngine.TryPlayerMove(move, _gameController.State.ClientPiece);
             if (moveSucceeded)
             {
                 IsDisabled = true;
-                Console.WriteLine($"UpdateBoard. Move: {move}, IsDisabled: {IsDisabled}");
+                Console.WriteLine($"ProcessClientMove. YourMove: {move}, IsDisabled: {IsDisabled}");
 
-                await _gameController.SendMoveToOpponent(move, _gameController.ClientPlayer);
+                await _gameController.SendMoveToOpponent(move, _gameController.State.ClientPiece);
                 StateHasChanged();
             }
         }
@@ -106,39 +122,17 @@
         await Task.CompletedTask;
     }
 
-    //TODO: Refactor this whole method.
-    private async Task ReceiveOpponentMove()
+    private void ProcessOpponentMove()
     {
-        var opponent = _gameController.Opponent.Piece;
-        var move = _gameController.Opponent.Move;
+        var opponentMove = _gameController.State.OpponentMove;
+        var opponentPiece = _gameController.State.OpponentPiece;
 
-
-        bool moveSucceeded = _gameEngine.TryPlayerMove(move, opponent);
+        bool moveSucceeded = _gameEngine.TryPlayerMove(opponentMove, opponentPiece);
         if (moveSucceeded)
         {
             IsDisabled = false;
-            Console.WriteLine($"Received Move from {opponent}. IsDisabled: {IsDisabled}");
+            Console.WriteLine($"ProcessOpponentMove: {opponentPiece}. IsDisabled: {IsDisabled}");
             StateHasChanged();
         }
-
-        //TODO: Replace with _gameController call.
-        await CheckForEndGame(opponent);
-    }
-
-    private async Task CheckForEndGame(char opponent)
-    {
-        if (_gameEngine.CheckForWin())
-        {
-            Console.WriteLine($"Opponent wins :(");
-            await _gameController.SendEndGameUpdate($"{opponent} wins!");
-        }
-        else if (_gameEngine.CheckForTie())
-        {
-            Console.WriteLine("Tie game :(");
-            await _gameController.SendEndGameUpdate("Tie game :(");
-        }
-
-        StateHasChanged();
-        await Task.CompletedTask;
     }
 }

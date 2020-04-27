@@ -35,10 +35,10 @@ namespace BlazorSignalRApp.Server.Hubs
 
             if (_gameSessionID != null)
             {
-                await Clients.Client(_playerOne).SendAsync("SetPlayer", 'X');
-                await Clients.Client(_playerTwo).SendAsync("SetPlayer", 'O');
+                await Clients.Client(_playerOne).SendAsync("SetPlayer", 'X', false);
+                await Clients.Client(_playerTwo).SendAsync("SetPlayer", 'O', true);
 
-                await Clients.Groups(_gameSessionID).SendAsync("RefreshGame");
+                await Clients.Groups(_gameSessionID).SendAsync("EnableGameUI");
             }
 
             await base.OnConnectedAsync();
