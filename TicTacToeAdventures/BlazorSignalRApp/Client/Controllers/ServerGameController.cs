@@ -8,6 +8,7 @@ namespace BlazorSignalRApp.Client.Controllers
     public class ServerGameController
     {
         private HubConnection _hubConnection;
+        private string _gameSessionID;
         public ClientState State { get; set; }
 
         public event EventHandler StartGame;
@@ -23,6 +24,7 @@ namespace BlazorSignalRApp.Client.Controllers
            .Build();
 
             _hubConnection.On<string>("ClientLog", ClientLog);
+            _hubConnection.On<string>("SetGameID", SetGameID);
             _hubConnection.On<char, bool>("SetPlayer", SetPlayer);
             _hubConnection.On<int, char>("ReceiveOpponentMove", ReceiveOpponentMove);
             _hubConnection.On<string>("ReceiveEndGameUpdate", ReceiveEndGameUpdate);
@@ -31,18 +33,17 @@ namespace BlazorSignalRApp.Client.Controllers
         }
 
         public async Task SendMoveToOpponent(int move, char player) =>
-            await _hubConnection.SendAsync("SendMove", move, player);
+            await _hubConnection.SendAsync("SendMove", _gameSessionID, move, player);
 
         public async Task SendEndGameUpdate(string update) =>
-            await _hubConnection.SendAsync("SendEndGameUpdate", update);
+            await _hubConnection.SendAsync("SendEndGameUpdate", _gameSessionID, update);
 
         public bool IsConnected =>
             _hubConnection.State == HubConnectionState.Connected;
 
-        private void ClientLog(string msg)
-        {
-            Console.WriteLine(msg.ToString());
-        }
+        private void ClientLog(string msg) => Console.WriteLine(msg.ToString());
+
+        private void SetGameID(string gameID) => _gameSessionID = gameID;
 
         private void SetPlayer(char player, bool uiDisabled)
         {
