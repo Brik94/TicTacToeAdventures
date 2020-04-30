@@ -1,5 +1,8 @@
-﻿.gameTitle {
+﻿.antique {
     text-align: center;
+}
+
+td, th, h1, h2, p {
     color: antiquewhite;
 }
 
