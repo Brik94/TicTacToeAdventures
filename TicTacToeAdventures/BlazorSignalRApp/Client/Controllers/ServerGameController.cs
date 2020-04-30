@@ -4,23 +4,24 @@ using System.Threading.Tasks;
 
 namespace BlazorSignalRApp.Client.Controllers
 {
-    //Responsible for talking to our GameHub. Seperation of UI and Talking to Server
+    //Responsible for talking to our GameHub. The middle man.
     public class ServerGameController
     {
         private HubConnection _hubConnection;
         private string _gameSessionID;
         public ClientState State { get; set; }
 
-        public event EventHandler StartGame;
-        public event EventHandler OpponentUpdatedEvent;
-        public event EventHandler UIUpdateEvent;
+        public event EventHandler StartGameEvent;
+        public event EventHandler OpponentUpdateEvent;
+        public event EventHandler EndGameEvent;
+        public event EventHandler RestartGameEvent;
 
-        public async Task Initialize()
+        public async Task Initialize(Uri uri)
         {
             State = new ClientState();
 
             _hubConnection = new HubConnectionBuilder()
-           .WithUrl("https://localhost:44330/gamehub")
+           .WithUrl(uri)
            .Build();
 
             _hubConnection.On<string>("ClientLog", ClientLog);
@@ -28,6 +29,7 @@ namespace BlazorSignalRApp.Client.Controllers
             _hubConnection.On<char, bool>("SetPlayer", SetPlayer);
             _hubConnection.On<int, char>("ReceiveOpponentMove", ReceiveOpponentMove);
             _hubConnection.On<string>("ReceiveEndGameUpdate", ReceiveEndGameUpdate);
+            _hubConnection.On<bool>("ReceiveRematchRequest", ReceiveRematchRequest);
 
             await _hubConnection.StartAsync();
         }
@@ -37,6 +39,9 @@ namespace BlazorSignalRApp.Client.Controllers
 
         public async Task SendEndGameUpdate(string update) =>
             await _hubConnection.SendAsync("SendEndGameUpdate", _gameSessionID, update);
+
+        public async Task SendRematchRequest(char player, bool accepted = false) =>
+            await _hubConnection.SendAsync("SendRematchRequest", _gameSessionID, player, accepted);
 
         public bool IsConnected =>
             _hubConnection.State == HubConnectionState.Connected;
@@ -49,31 +54,56 @@ namespace BlazorSignalRApp.Client.Controllers
         {
             State.ClientPiece = player;
             State.UIDisabled = uiDisabled;
+            State.GameStatus = GameStatus.InProgress;
             Console.WriteLine("Player Game Piece: " + State.ClientPiece);
 
-            StartGame?.Invoke(this, new EventArgs());
+            StartGameEvent?.Invoke(this, new EventArgs());
         }
 
         private void ReceiveEndGameUpdate(string update)
         {
             State.StatusMessage = update;
-            UIUpdateEvent?.Invoke(this, new EventArgs());
+            State.GameStatus = GameStatus.Ending;
+            EndGameEvent?.Invoke(this, new EventArgs());
         }
 
         private void ReceiveOpponentMove(int move, char opponent)
         {
             State.OpponentMove = move;
             State.OpponentPiece = opponent;
-            OpponentUpdatedEvent?.Invoke(this, new EventArgs());
+            OpponentUpdateEvent?.Invoke(this, new EventArgs());
+        }
+
+        public void ReceiveRematchRequest(bool accepted)
+        {
+            if (accepted)
+            {
+                State.GameStatus = GameStatus.Starting;
+            }
+            else
+            {
+                State.GameStatus = GameStatus.RematchRequest;
+            }
+
+            RestartGameEvent?.Invoke(this, new EventArgs());
         }
 
         public class ClientState
         {
             public bool UIDisabled { get; set; } = true;
+            public GameStatus GameStatus { get; set; } = GameStatus.Starting;
             public string StatusMessage { get; set; }
             public char ClientPiece { get; set; }
             public char OpponentPiece { get; set; }
             public int OpponentMove { get; set; }
         }
+    }
+
+    public enum GameStatus
+    {
+        Starting,
+        InProgress,
+        Ending,
+        RematchRequest
     }
 }

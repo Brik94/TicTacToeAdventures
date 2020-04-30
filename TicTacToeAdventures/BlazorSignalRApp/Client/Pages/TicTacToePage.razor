@@ -3,7 +3,8 @@
 @inject NavigationManager NavigationManager
 
 <div class="board">
-    <h1 class="gameTitle">Tic Tac Toe</h1>
+    <h1 class="antique">Welcome to Tic-Tac-Toe</h1>
+    <h2 class="antique">@StatusMessage</h2>
 
     <table>
         <tr>
@@ -42,25 +43,40 @@
     </table>
 </div>
 
-<h1>@_gameController.State.StatusMessage</h1>
-<h1>You are player @_gameController.State.ClientPiece</h1>
+
+@{
+    if (GameStatus == GameStatus.Ending)
+    {
+        <h1>@_gameController.State.StatusMessage</h1>
+        <button type="button" @onclick="(() => RestartGameRequest(requestSender: true))">Ask for a Rematch</button>
+    }
+    else if (GameStatus == GameStatus.RematchRequest)
+    {
+        <button type="button" @onclick="(() => RestartGameRequest(requestSender: false))">Accept Rematch</button>
+    }
+}
+
 
 @code {
-    //TODO: Disable UI
     private ServerGameController _gameController;
     private GameEngine _gameEngine;
+    private GameStatus GameStatus { get; set; }
+    private string StatusMessage { get; set; }
     protected bool IsDisabled { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
         _gameEngine = new GameEngine();
 
         _gameController = new ServerGameController();
-        _gameController.StartGame += EnableUI;
-        _gameController.UIUpdateEvent += UpdateUIState;
-        _gameController.OpponentUpdatedEvent += UpdateOpponentMove;
-        await _gameController.Initialize();
+        _gameController.StartGameEvent += EnableUI;
+        _gameController.EndGameEvent += EndGameUpdate;
+        _gameController.OpponentUpdateEvent += UpdateOpponentMove;
+        _gameController.RestartGameEvent += RestartGame;
+        await _gameController.Initialize(NavigationManager.ToAbsoluteUri("/gameHub"));
 
+        StatusMessage = "Waiting for Player 2...";
         IsDisabled = _gameController.State.UIDisabled;
         await base.OnInitializedAsync();
     }
@@ -68,11 +84,13 @@
     private void EnableUI(object sender, EventArgs e)
     {
         IsDisabled = _gameController.State.UIDisabled;
+        StatusMessage = $"The game has begun. You are {_gameController.State.ClientPiece}.";
         StateHasChanged();
     }
 
-    private void UpdateUIState(object sender, EventArgs e)
+    private void EndGameUpdate(object sender, EventArgs e)
     {
+        GameStatus = _gameController.State.GameStatus;
         StateHasChanged();
     }
 
@@ -80,6 +98,22 @@
     {
         ProcessOpponentMove();
         CheckForEndGame();
+    }
+
+    private void RestartGame(object sender, EventArgs e)
+    {
+        GameStatus = _gameController.State.GameStatus;
+        if (GameStatus == GameStatus.RematchRequest)
+        {
+            StatusMessage = "Rematch Request has been received. Click Accept below to play again.";
+            StateHasChanged();
+        }
+        else if (GameStatus == GameStatus.Starting)
+        {
+            _gameEngine = new GameEngine();
+            StatusMessage = $"The game has begun. You are {_gameController.State.ClientPiece}. Opponent goes first.";
+            StateHasChanged();
+        }
     }
 
     private async void CheckForEndGame()
@@ -132,6 +166,26 @@
         {
             IsDisabled = false;
             Console.WriteLine($"ProcessOpponentMove: {opponentPiece}. IsDisabled: {IsDisabled}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task RestartGameRequest(bool requestSender)
+    {
+        if (requestSender)
+        {
+            await _gameController.SendRematchRequest(_gameController.State.ClientPiece);
+            StatusMessage = "Rematch Request sent. Game will restart once opponent accepts.";
+            StateHasChanged();
+        }
+        else
+        {
+            await _gameController.SendRematchRequest(_gameController.State.ClientPiece, accepted: true);
+            _gameEngine = new GameEngine();
+            GameStatus = GameStatus.Starting;
+            StatusMessage = "";
+            IsDisabled = false;
+            StatusMessage = $"The game has begun. You are {_gameController.State.ClientPiece}. You go first.";
             StateHasChanged();
         }
     }
