@@ -1,0 +1,7 @@
+﻿Links for Testing SignalR Hubs
+- Simple: https://stackoverflow.com/questions/46953516/how-to-test-signalr-2-hub-only-notifies-a-single-user
+- Advanced: https://buildingsteps.wordpress.com/2018/06/12/testing-signalr-hubs-in-asp-net-core-2-1/
+- Integration: https://www.dotnetcurry.com/aspnet-core/1519/integration-testing-signalr-kestrel
+- Example Project with decent tests: https://github.com/upta/gemfire/blob/master/Gemfire.Tests/Server/Hub/LobbyTests.cs
+
+I think unit tests will suffice.

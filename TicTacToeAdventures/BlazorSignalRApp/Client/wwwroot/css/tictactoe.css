@@ -1,10 +1,25 @@
-﻿h1 {
+﻿.antique {
     text-align: center;
+}
+
+td, th, h1, h2, p {
+    color: antiquewhite;
+}
+
+.board {
+    background-color: #2c2f32;
 }
 
 td {
     width: 100px;
     height: 100px;
+    text-align: center;
+    color: antiquewhite;
+    font-size: xx-large;
+}
+
+h1 {
+    color: antiquewhite;
 }
 
 table {
@@ -12,11 +27,11 @@ table {
 }
 
 .vert {
-    border-left: 2px solid black;
-    border-right: 2px solid black;
+    border-left: 5px solid antiquewhite;
+    border-right: 5px solid antiquewhite;
 }
 
 .hori {
-    border-top: 2px solid black;
-    border-bottom: 2px solid black;
+    border-top: 5px solid antiquewhite;
+    border-bottom: 5px solid antiquewhite;
 }

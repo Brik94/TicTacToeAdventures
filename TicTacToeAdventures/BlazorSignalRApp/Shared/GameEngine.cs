@@ -2,6 +2,8 @@
 
 namespace TicTacToe.Shared
 {
+    //TODO: Consider adding logic for GameEngine to know about WinningPlayer
+    //This may be useful info to send to the server hub.
     public class GameEngine
     {
         private char[] _gameBoard;

@@ -1,66 +1,192 @@
-﻿@page "/game"
-@using Microsoft.AspNetCore.SignalR.Client
+﻿@using TicTacToe.Shared;
+@using Controllers;
 @inject NavigationManager NavigationManager
 
-<h1>Tic Tac Toe</h1>
-<table>
-    <tr>
-        <td @onclick = "(() => UpdateBoard(0))"></td>
-        <td @onclick = "(() => UpdateBoard(1))" class="vert"></td>
-        <td @onclick = "(() => UpdateBoard(2))"></td>
-    </tr>
-    <tr>
-        <td @onclick = "(() => UpdateBoard(3))" class="hori"></td>
-        <td @onclick = "(() => UpdateBoard(4))" class="vert hori"></td>
-        <td @onclick = "(() => UpdateBoard(5))" class="hori"></td>
-    </tr>
-    <tr>
-        <td @onclick = "(() => UpdateBoard(6))"></td>
-        <td @onclick = "(() => UpdateBoard(7))" class="vert"></td>
-        <td @onclick = "(() => UpdateBoard(8))" ></td>
-    </tr>
-</table>
+<div class="board">
+    <h1 class="antique">Welcome to Tic-Tac-Toe</h1>
+    <h2 class="antique">@StatusMessage</h2>
+
+    <table>
+        <tr>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(0))">
+                @_gameEngine.GameBoard[0]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(1))" class="vert">
+                @_gameEngine.GameBoard[1]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(2))">
+                @_gameEngine.GameBoard[2]
+            </td>
+        </tr>
+        <tr>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(3))" class="hori">
+                @_gameEngine.GameBoard[3]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(4))" class="vert hori">
+                @_gameEngine.GameBoard[4]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(5))" class="hori">
+                @_gameEngine.GameBoard[5]
+            </td>
+        </tr>
+        <tr>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(6))">
+                @_gameEngine.GameBoard[6]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(7))" class="vert">
+                @_gameEngine.GameBoard[7]
+            </td>
+            <td disabled=@IsDisabled @onclick="(() => ProcessClientMove(8))">
+                @_gameEngine.GameBoard[8]
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+@{
+    if (GameStatus == GameStatus.Ending)
+    {
+        <h1>@_gameController.State.StatusMessage</h1>
+        <button type="button" @onclick="(() => RestartGameRequest(requestSender: true))">Ask for a Rematch</button>
+    }
+    else if (GameStatus == GameStatus.RematchRequest)
+    {
+        <button type="button" @onclick="(() => RestartGameRequest(requestSender: false))">Accept Rematch</button>
+    }
+}
+
 
 @code {
-    private HubConnection _hubConnection;
-    private List<string> _messages = new List<string>();
-    private string _userInput;
-    private string _messageInput;
+    private ServerGameController _gameController;
+    private GameEngine _gameEngine;
+    private GameStatus GameStatus { get; set; }
+    private string StatusMessage { get; set; }
+    protected bool IsDisabled { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/gameHub"))
-            .Build();
+        _gameEngine = new GameEngine();
 
-        _hubConnection.On<string>("ClientLog", ClientLog);
-        _hubConnection.On("SetPlayer", SetPlayer);
+        _gameController = new ServerGameController();
+        _gameController.StartGameEvent += EnableUI;
+        _gameController.EndGameEvent += EndGameUpdate;
+        _gameController.OpponentUpdateEvent += UpdateOpponentMove;
+        _gameController.RestartGameEvent += RestartGame;
+        await _gameController.Initialize(NavigationManager.ToAbsoluteUri("/gameHub"));
 
-
-        //StateHasChanged(); make use of this somewhere.
-        await _hubConnection.StartAsync();
+        StatusMessage = "Waiting for Player 2...";
+        IsDisabled = _gameController.State.UIDisabled;
+        await base.OnInitializedAsync();
     }
 
-    private async Task ClientLog(string msg)
+    private void EnableUI(object sender, EventArgs e)
     {
-        Console.WriteLine(msg.ToString());
+        IsDisabled = _gameController.State.UIDisabled;
+        StatusMessage = $"The game has begun. You are {_gameController.State.ClientPiece}.";
+        StateHasChanged();
+    }
+
+    private void EndGameUpdate(object sender, EventArgs e)
+    {
+        GameStatus = _gameController.State.GameStatus;
+        StateHasChanged();
+    }
+
+    private void UpdateOpponentMove(object sender, EventArgs e)
+    {
+        ProcessOpponentMove();
+        CheckForEndGame();
+    }
+
+    private void RestartGame(object sender, EventArgs e)
+    {
+        GameStatus = _gameController.State.GameStatus;
+        if (GameStatus == GameStatus.RematchRequest)
+        {
+            StatusMessage = "Rematch Request has been received. Click Accept below to play again.";
+            StateHasChanged();
+        }
+        else if (GameStatus == GameStatus.Starting)
+        {
+            _gameEngine = new GameEngine();
+            StatusMessage = $"The game has begun. You are {_gameController.State.ClientPiece}. Opponent goes first.";
+            StateHasChanged();
+        }
+    }
+
+    private async void CheckForEndGame()
+    {
+        if (_gameEngine.CheckForWin())
+        {
+            IsDisabled = true;
+            Console.WriteLine($"Opponent wins :(");
+            await _gameController.SendEndGameUpdate($"{_gameController.State.OpponentPiece} wins!");
+        }
+        else if (_gameEngine.CheckForTie())
+        {
+            IsDisabled = true;
+            Console.WriteLine("Tie game :(");
+            await _gameController.SendEndGameUpdate("Tie game :(");
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ProcessClientMove(int move)
+    {
+        if (!IsDisabled)
+        {
+            bool moveSucceeded = _gameEngine.TryPlayerMove(move, _gameController.State.ClientPiece);
+            if (moveSucceeded)
+            {
+                IsDisabled = true;
+                Console.WriteLine($"ProcessClientMove. YourMove: {move}, IsDisabled: {IsDisabled}");
+
+                await _gameController.SendMoveToOpponent(move, _gameController.State.ClientPiece);
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            Console.WriteLine("UI Disabled. Not your turn.");
+        }
+
         await Task.CompletedTask;
     }
 
-    //TODO: Once the server lets me know 2 players have joined, set the players to X & O somehow...
-    private async Task SetPlayer()
+    private void ProcessOpponentMove()
     {
-        await Task.CompletedTask;
+        var opponentMove = _gameController.State.OpponentMove;
+        var opponentPiece = _gameController.State.OpponentPiece;
+
+        bool moveSucceeded = _gameEngine.TryPlayerMove(opponentMove, opponentPiece);
+        if (moveSucceeded)
+        {
+            IsDisabled = false;
+            Console.WriteLine($"ProcessOpponentMove: {opponentPiece}. IsDisabled: {IsDisabled}");
+            StateHasChanged();
+        }
     }
 
-
-    //TODO: Pass the move to the gameBoard.
-    private async Task UpdateBoard(int move)
+    private async Task RestartGameRequest(bool requestSender)
     {
-        Console.WriteLine($"{move} was clicked.");
-        await Task.CompletedTask;
+        if (requestSender)
+        {
+            await _gameController.SendRematchRequest(_gameController.State.ClientPiece);
+            StatusMessage = "Rematch Request sent. Game will restart once opponent accepts.";
+            StateHasChanged();
+        }
+        else
+        {
+            await _gameController.SendRematchRequest(_gameController.State.ClientPiece, accepted: true);
+            _gameEngine = new GameEngine();
+            GameStatus = GameStatus.Starting;
+            StatusMessage = "";
+            IsDisabled = false;
+            StatusMessage = $"The game has begun. You are {_gameController.State.ClientPiece}. You go first.";
+            StateHasChanged();
+        }
     }
-
-    public bool IsConnected =>
-        _hubConnection.State == HubConnectionState.Connected;
 }
